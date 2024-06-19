@@ -17,7 +17,7 @@ public class TransactionController {
     private TransactionService transactionService;
 
     @PostMapping("/transfer")
-    public ResponseEntity<?> transfer (@Valid @RequestBody TransactionRequest transactionRequest) {
+    public ResponseEntity<Transaction> transfer (@Valid @RequestBody TransactionRequest transactionRequest) {
         try {
             Transaction transaction = transactionService.transfer(transactionRequest.getSenderAccountId(), transactionRequest.getRecipientAccountId(), transactionRequest.getAmount());
             return ResponseEntity.ok(transaction);

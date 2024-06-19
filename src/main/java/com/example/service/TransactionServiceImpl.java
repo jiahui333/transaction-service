@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.math.BigDecimal;
@@ -28,20 +30,22 @@ public class TransactionServiceImpl implements TransactionService {
 
     @Override
     public Transaction transfer(Long senderAccountId, Long recipientAccountId, BigDecimal amount) {
+        AccountResponse senderAccount;
+        AccountResponse recipientAccount;
 
-        AccountResponse senderAccount = restTemplate.getForObject(accountServiceUrl + senderAccountId, AccountResponse.class);
-        AccountResponse recipientAccount = restTemplate.getForObject(accountServiceUrl + recipientAccountId, AccountResponse.class);
-
-        if (senderAccount == null) {
+        try {
+            senderAccount = restTemplate.getForObject(accountServiceUrl + senderAccountId, AccountResponse.class);
+        } catch (HttpClientErrorException.NotFound e) {
             logger.error("Sender account not found by Id: {}", senderAccountId);
             throw new IllegalArgumentException("Sender account not found");
         }
 
-        if (recipientAccount == null) {
-            logger.error("Recipient account not found by Id: {}", recipientAccountId);
-            throw new IllegalArgumentException("Recipient account not found");
-        }
-
+       try {
+           recipientAccount = restTemplate.getForObject(accountServiceUrl + recipientAccountId, AccountResponse.class);
+       } catch (HttpClientErrorException.NotFound e) {
+           logger.error("Recipient account not found by Id: {}", recipientAccountId);
+           throw new IllegalArgumentException("Recipient account not found");
+       }
 
         if (senderAccount.getBalance().compareTo(amount) <= 0) {
             logger.error("Insufficient funds in sender account with id: {}", senderAccountId);
